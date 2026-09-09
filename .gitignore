@@ -1,0 +1,11 @@
+dados_brutos/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+.env
+Thumbs.db
+
