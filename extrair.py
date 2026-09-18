@@ -69,29 +69,27 @@ def buscar_json_com_cache(url, caminho_cache):
 
 def inserir_documento(colecao, documento):
     """
-    Upsert idempotente.
+    Upsert idempotente por substituição completa do documento.
 
-    O conteúdo bruto e a linhagem de origem podem ser reafirmados, mas o instante
-    de ingestão é gravado somente na primeira inserção. Assim, uma segunda execução
-    sobre o mesmo cache não altera o estado lógico do documento.
+    A substituição é intencional: cabeçalhos brutos do pokemon.csv como
+    "Sp. Atk" e "Sp. Def" contêm ponto. Em operadores como $set, o ponto é
+    interpretado pelo MongoDB como caminho de subdocumento e alteraria a
+    estrutura da fonte. replace_one preserva o documento bruto como recebido.
+
+    O instante de ingestão original é mantido em reexecuções.
     """
     documento_id = documento["_id"]
-    ingerido_em = documento["_ingerido_em"]
-    campos_atualizaveis = {
-        chave: valor
-        for chave, valor in documento.items()
-        if chave not in {"_id", "_ingerido_em"}
-    }
-
-    colecao.update_one(
+    existente = colecao.find_one(
         {"_id": documento_id},
-        {
-            "$set": campos_atualizaveis,
-            "$setOnInsert": {
-                "_id": documento_id,
-                "_ingerido_em": ingerido_em,
-            },
-        },
+        {"_ingerido_em": 1},
+    )
+
+    if existente and "_ingerido_em" in existente:
+        documento["_ingerido_em"] = existente["_ingerido_em"]
+
+    colecao.replace_one(
+        {"_id": documento_id},
+        documento,
         upsert=True,
     )
 
