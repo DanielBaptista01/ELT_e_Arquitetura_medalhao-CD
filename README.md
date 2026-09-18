@@ -252,7 +252,7 @@ A categoria é derivada uma vez na carga Silver: `MITICO` > `LENDARIO` > `BEBE` 
 
 A matriz de confronto contém todas as 324 combinações, inclusive pares sem observação. Cada batalha alimenta duas orientações porque a fato possui uma participação por lado; a coluna `First_pokemon` não define a orientação da análise 7.
 
-Na análise 3 o corte recomendado no arquivo de consultas é **50 combates**. A Gold não aplica esse corte durante a carga: `total_combates` permanece materializado ao lado do winrate, então o limiar pode ser alterado somente com `WHERE`.
+Na análise 3 o corte recomendado no arquivo de consultas é **50 combates**. A Gold não aplica esse corte durante a carga: `total_combates` permanece materializado ao lado do winrate, então o limiar pode ser alterado somente com `WHERE`. A tabela `gold.ranking_pokemon` contém os Pokémon que possuem ao menos uma participação na fato, pois taxa de vitórias não é definida para denominador zero; a validação compara essa quantidade com `COUNT(DISTINCT pokemon_sk)` da Silver, em vez de assumir rigidamente 800 linhas.
 
 ## 8. Análise proposta pelo grupo
 
