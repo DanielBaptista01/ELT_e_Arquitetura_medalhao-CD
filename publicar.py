@@ -232,8 +232,17 @@ def validar_e_registrar(cursor, inicio):
         contagens[tabela] = contagem
         print(f"  gold.{tabela}: {contagem}")
 
-    if contagens["ranking_pokemon"] != 800:
-        raise RuntimeError("gold.ranking_pokemon deve conter 800 Pokémon.")
+    cursor.execute(
+        "SELECT COUNT(DISTINCT pokemon_sk) FROM silver.fato_participacao"
+    )
+    pokemon_com_combates = cursor.fetchone()[0]
+
+    if contagens["ranking_pokemon"] != pokemon_com_combates:
+        raise RuntimeError(
+            "gold.ranking_pokemon inconsistente: "
+            f"esperados {pokemon_com_combates} Pokémon com ao menos um combate, "
+            f"encontrados {contagens['ranking_pokemon']}."
+        )
     if contagens["taxa_vitorias_por_tipo"] != 18:
         raise RuntimeError("gold.taxa_vitorias_por_tipo deve conter 18 tipos.")
     if contagens["matriz_confronto"] != 324:
