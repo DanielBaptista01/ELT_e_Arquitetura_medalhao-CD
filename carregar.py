@@ -47,6 +47,43 @@ def booleano_texto(valor):
     return str(valor).strip().lower() == "true"
 
 
+def normalizar_cabecalho_csv(nome):
+    """Normaliza apenas o nome da coluna para localizar o campo bruto na Silver."""
+    texto = unicodedata.normalize("NFKD", str(nome))
+    texto = "".join(ch for ch in texto if not unicodedata.combining(ch))
+    return re.sub(r"[^a-z0-9]+", "", texto.lower())
+
+
+def campo_csv(linha, nome, obrigatorio=True):
+    """
+    Lê um campo preservado da Bronze sem exigir pontuação idêntica no cabeçalho.
+
+    A Bronze continua imutável. Esta compatibilização pertence à Silver e permite,
+    por exemplo, reconhecer 'Sp. Atk', 'Sp Atk' ou 'Sp_Atk' como a mesma coluna.
+    """
+    if nome in linha:
+        return linha[nome]
+
+    alvo = normalizar_cabecalho_csv(nome)
+    correspondencias = [
+        chave for chave in linha
+        if not str(chave).startswith("_")
+        and normalizar_cabecalho_csv(chave) == alvo
+    ]
+
+    if len(correspondencias) == 1:
+        return linha[correspondencias[0]]
+
+    if not obrigatorio:
+        return None
+
+    campos = sorted(str(chave) for chave in linha if not str(chave).startswith("_"))
+    raise KeyError(
+        f"Campo {nome!r} não encontrado no documento pokemon_csv. "
+        f"Campos disponíveis: {campos}"
+    )
+
+
 def nome_recurso_url(url):
     if not url:
         return None
@@ -402,12 +439,12 @@ def carregar_pokemon(cursor, db, mapa_tipo_nome, mapa_geracao):
                 geracao,
                 geracao_nome,
                 regiao,
-                int(linha["HP"]),
-                int(linha["Attack"]),
-                int(linha["Defense"]),
-                int(linha["Sp. Atk"]),
-                int(linha["Sp. Def"]),
-                int(linha["Speed"]),
+                int(campo_csv(linha, "HP")),
+                int(campo_csv(linha, "Attack")),
+                int(campo_csv(linha, "Defense")),
+                int(campo_csv(linha, "Sp. Atk")),
+                int(campo_csv(linha, "Sp. Def")),
+                int(campo_csv(linha, "Speed")),
                 (forma.get("height") / 10.0) if forma and forma.get("height") is not None else None,
                 (forma.get("weight") / 10.0) if forma and forma.get("weight") is not None else None,
                 inteiro(forma.get("base_experience")) if forma else None,
@@ -458,7 +495,7 @@ def carregar_pokemon(cursor, db, mapa_tipo_nome, mapa_geracao):
                 tipo_secundario if tipo_secundario else "sem_tipo_secundario"
             ],
             "geracao_sk": mapa_geracao[geracao],
-            "velocidade": int(linha["Speed"]),
+            "velocidade": int(campo_csv(linha, "Speed")),
             "nome": nome_exibicao,
         }
 
