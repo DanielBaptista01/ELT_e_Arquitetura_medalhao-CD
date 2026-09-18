@@ -130,7 +130,7 @@ A extração dos tipos consulta a listagem com `limit=100`, evitando a paginaç�
 
 Antes de qualquer escrita no MongoDB, as respostas da API e os dois CSVs são gravados em `dados_brutos/`. A API só é acessada quando o arquivo bruto correspondente não existe. Por isso, a segunda execução consecutiva realiza zero requisições às fontes.
 
-Cada documento recebe `_id` derivado da chave natural, `_fonte`, `_url` e `_ingerido_em`. A escrita usa `update_one(..., upsert=True)`. `_ingerido_em` é definido com `$setOnInsert`, logo não é regravado em uma nova execução sobre o mesmo cache.
+Cada documento recebe `_id` derivado da chave natural, `_fonte`, `_url` e `_ingerido_em`. A escrita usa `replace_one(..., upsert=True)` para preservar integralmente inclusive cabeçalhos do CSV que contêm ponto, como `Sp. Atk` e `Sp. Def`; com operadores como `$set`, o ponto seria interpretado como caminho de subdocumento. Antes da substituição, o valor existente de `_ingerido_em` é recuperado e reutilizado, de modo que a reexecução mantém o instante original de ingestão.
 
 `dados_brutos/` é cache reconstituível e permanece no `.gitignore`.
 
@@ -264,7 +264,7 @@ Essa análise não é uma troca de coluna das análises obrigatórias: investiga
 
 ## 9. Idempotência por camada
 
-- **Bronze:** cache em disco + `_id` natural + `upsert`; `_ingerido_em` somente no primeiro insert.
+- **Bronze:** cache em disco + `_id` natural + `replace_one(..., upsert=True)`; o documento bruto é reafirmado integralmente e `_ingerido_em` preserva o valor da primeira ingestão.
 - **Silver:** o DDL é versionado e executado por `carregar.py`; as tabelas são truncadas e reconstruídas integralmente a partir da Bronze dentro de uma transação. Reexecutar produz o mesmo conjunto analítico, sem duplicação.
 - **Gold:** `publicar.py` trunca e repopula os agregados exclusivamente a partir da Silver. Não há `GROUP BY` nem join nas consultas finais da Gold.
 
