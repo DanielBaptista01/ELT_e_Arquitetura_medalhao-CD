@@ -56,13 +56,23 @@ def normalizar_cabecalho_csv(nome):
 
 def campo_csv(linha, nome, obrigatorio=True):
     """
-    Lê um campo preservado da Bronze sem exigir pontuação idêntica no cabeçalho.
+    Lê um campo do pokemon.csv preservado na Bronze.
 
-    A Bronze continua imutável. Esta compatibilização pertence à Silver e permite,
-    por exemplo, reconhecer 'Sp. Atk', 'Sp Atk' ou 'Sp_Atk' como a mesma coluna.
+    Além do cabeçalho original, aceita uma representação legada criada por uma
+    versão anterior da extração, na qual o MongoDB interpretou "Sp. Atk" e
+    "Sp. Def" como caminhos e os armazenou sob o subdocumento "Sp".
     """
     if nome in linha:
         return linha[nome]
+
+    # Compatibilidade temporária com Bronze produzida antes da correção do
+    # replace_one em extrair.py: {"Sp": {"Atk": "...", "Def": "..."}}.
+    if nome in {"Sp. Atk", "Sp. Def"}:
+        sp = linha.get("Sp")
+        if isinstance(sp, dict):
+            subcampo = "Atk" if nome == "Sp. Atk" else "Def"
+            if subcampo in sp:
+                return sp[subcampo]
 
     alvo = normalizar_cabecalho_csv(nome)
     correspondencias = [
