@@ -113,9 +113,31 @@ python publicar.py
 
 Depois, execute as análises:
 
-```bash
-psql "$POSTGRES_URL" -f sql/consultas.sql
-```
+Se você **não tem o cliente do PostgreSQL (`psql`) instalado** na sua máquina física, não é necessário baixá-lo. Como o banco de dados já está rodando dentro do Docker, você pode injetar o arquivo de consultas diretamente para dentro do container utilizando o comando correspondente ao seu terminal:
+
+*   **No PowerShell (Windows):**
+    ```powershell
+    Get-Content sql/consultas.sql | docker exec -i ep01-postgres psql -U postgres -d pokedex
+    ```
+
+*   **No Linux / macOS :**
+    ```bash
+    docker exec -i ep01-postgres psql -U postgres -d pokedex < sql/consultas.sql
+    ```
+
+---
+
+Caso você **já possua** ou queira instalar o cliente do PostgreSQL localmente, certifique-se de adicioná-lo às variáveis de ambiente do seu sistema (`PATH`) e utilize a sintaxe correta do seu terminal:
+
+*   **No PowerShell (Windows):**
+    ```powershell
+    psql \$env:POSTGRES_URL -f sql/consultas.sql
+    ```
+
+*   **No Linux / macOS (Bash ou Zsh):**
+    ```bash
+    psql "\$POSTGRES_URL" -f sql/consultas.sql
+    ```
 
 No PowerShell, pode-se usar o valor literal da conexão no lugar de `$POSTGRES_URL`. As consultas também podem ser abertas no pgAdmin ou em outro cliente PostgreSQL.
 
