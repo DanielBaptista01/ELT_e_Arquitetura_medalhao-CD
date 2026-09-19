@@ -71,12 +71,21 @@ Se `MONGODB_URL` não for informada, o código usa `mongodb://localhost:27017`.
 
 ### 2.3 PostgreSQL
 
-Exemplo com Docker:
+Exemplo com Docker (Linux/macOS):
 
 ```bash
 docker run -d --name ep01-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=pokedex \
+  -p 5432:5432 postgres:16
+```
+
+Exemplo com Docker (PowerShell):
+
+```powershell
+docker run -d --name ep01-postgres `
+  -e POSTGRES_PASSWORD=postgres `
+  -e POSTGRES_DB=pokedex `
   -p 5432:5432 postgres:16
 ```
 
